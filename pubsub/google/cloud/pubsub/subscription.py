@@ -379,6 +379,46 @@ class Subscription(object):
         api.subscription_modify_ack_deadline(
             self.full_name, ack_ids, ack_deadline)
 
+    # Note: snippets?
+    def snapshot(self, name):
+        """Creates a snapshot of this subscription.
+
+        :type name: str
+        :param name: the name of the subscription
+
+        :rtype: :class:`Snapshot`
+        :returns: The snapshot created with the passed in arguments.
+        """
+        return Snapshot(name, self)
+
+    # Note: snippets?
+    def seek_snapshot(self, snapshot):
+        """API call:  seek a subscription to a given snapshot
+
+        See:
+        https://cloud.google.com/pubsub/docs/reference/rest/v1/projects.subscriptions/seek
+
+        :type snapshot: :class:`Snapshot`
+        :param snapshot: The snapshot to seek to.
+        """
+        client = self._require_client(client)
+        api = client.subscriber_api
+        api.subscription_seek(self.full_name, snapshot=snapshot.full_name)
+
+    def seek_timestamp(self):
+        """API call:  seek a subscription to a given point in time
+
+        See:
+        https://cloud.google.com/pubsub/docs/reference/rest/v1/projects.subscriptions/seek
+
+        :type time: :class:`datetime.datetime`
+        :param time: The time to seek to.
+        """
+        client = self._require_client(client)
+        timestamp = _datetime_to_rfc3339(timestamp)
+        api = client.subscriber_api
+        api.subscription_seek(self.full_name, time=timestamp)
+
     def get_iam_policy(self, client=None):
         """Fetch the IAM policy for the subscription.
 
