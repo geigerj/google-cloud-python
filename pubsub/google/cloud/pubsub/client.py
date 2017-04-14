@@ -191,7 +191,7 @@ class Client(ClientWithProject):
         return api.list_subscriptions(
             self.project, page_size, page_token)
 
-    def list_snapshots(self, page_size=None, page_token=None)
+    def list_snapshots(self, page_size=None, page_token=None):
         """List snapshots for the project associated with this API.
 
         See:

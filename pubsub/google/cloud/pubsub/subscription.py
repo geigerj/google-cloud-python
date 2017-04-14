@@ -389,7 +389,7 @@ class Subscription(object):
         :rtype: :class:`Snapshot`
         :returns: The snapshot created with the passed in arguments.
         """
-        return Snapshot(name, self)
+        return Snapshot(name, subscrption=self)
 
     # Note: snippets?
     def seek_snapshot(self, snapshot):

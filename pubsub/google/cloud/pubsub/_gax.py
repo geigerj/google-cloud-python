@@ -37,6 +37,7 @@ from google.cloud.exceptions import NotFound
 from google.cloud.iterator import GAXIterator
 from google.cloud.pubsub import __version__
 from google.cloud.pubsub._helpers import subscription_name_from_path
+from google.cloud.pubsub.snapshot import Snapshot
 from google.cloud.pubsub.subscription import Subscription
 from google.cloud.pubsub.topic import Topic
 
@@ -501,8 +502,7 @@ class _SubscriberAPI(object):
         except GaxError as exc:
             if exc_to_code(exc.cause) == StatusCode.NOT_FOUND:
                 raise NotFound(subscription_path)
-            raise            
-        
+            raise   
     def list_snapshots(self, project, page_size=0, page_token=None):
         """List snapshots for the project associated with this API.
 
@@ -532,15 +532,15 @@ class _SubscriberAPI(object):
         page_iter = self._gax_api.list_snapshots(
             path, page_size=page_size, options=options)
 
-        # We attach a mutable subscriptions dictionary so that as topic
+        # We attach a mutable topics dictionary so that as topic
         # objects are created by Snapshot.from_api_repr, they
-        # can be re-used by other snapshots of the same subscription.
-        subscriptions = {}
+        # can be re-used by other snapshots of the same topic.
+        topics = {}
         item_to_value = functools.partial(
-            _item_to_sub_for_client, subscriptions=subscriptions)
+            _item_to_snapshot_for_client, topics=topics)
         return GAXIterator(self._client, page_iter, item_to_value)
 
-    def snapshot_create(self, snapshot_path, subscription_path)
+    def snapshot_create(self, snapshot_path, subscription_path):
         """API call:  create a snapshot
 
         See:
@@ -563,13 +563,14 @@ class _SubscriberAPI(object):
                     not exist
         """
         try:
-            snapshot_pb = self._gax_api.create_subscription(
+            snapshot_pb = self._gax_api.create_snapshot(
                 snapshot_path, subscription_path)
         except GaxError as exc:
             if exc_to_code(exc.cause) == StatusCode.FAILED_PRECONDITION:
                 raise Conflict(snapshot_path)
             elif exc_to_code(exc.cause) == StatusCode.NOT_FOUND:
                 raise NotFound(subscription_path)
+            raise
         return MessageToDict(snapshot_pb)
 
     def snapshot_delete(self, snapshot_path):
@@ -743,4 +744,36 @@ def _item_to_sub_for_client(iterator, sub_pb, topics):
     """
     resource = MessageToDict(sub_pb)
     return Subscription.from_api_repr(
+        resource, iterator.client, topics=topics)
+
+def _item_to_snapshot_for_client(iterator, snapshot_pb, topics):
+    """Convert a subscription protobuf to the native object.
+
+    .. note::
+
+       This method does not have the correct signature to be used as
+       the ``item_to_value`` argument to
+       :class:`~google.cloud.iterator.Iterator`. It is intended to be
+       patched with a mutable topics argument that can be updated
+       on subsequent calls. For an example, see how the method is
+       used above in :meth:`_SubscriberAPI.list_snapshots`.
+
+    :type iterator: :class:`~google.cloud.iterator.Iterator`
+    :param iterator: The iterator that is currently in use.
+
+    :type sub_pb: :class:`.pubsub_pb2.Snapshot`
+    :param sub_pb: A subscription returned from the API.
+
+    :type topics: dict
+    :param topics: A dictionary of topics to be used (and modified)
+                   as new subscriptions are created bound to topics.
+
+    :rtype: :class:`~google.cloud.pubsub.subscription.Subscription`
+    :returns: The next subscription in the page.
+    """
+    print 'converting'
+    print snapshot_pb
+    resource = MessageToDict(snapshot_pb)
+    print resource
+    return Snapshot.from_api_repr(
         resource, iterator.client, topics=topics)

@@ -14,22 +14,27 @@
 
 """Define API Snapshots."""
 
+from google.cloud.pubsub.topic import Topic
+
 class Snapshot(object):
-    def __init__(name, subscription, client=None):
+    # FIXME: do we want this here?
+    _DELETED_TOPIC_PATH = '_deleted-topic_'
+    """Value of ``projects.subscriptions.topic`` when topic has been deleted."""
 
-        if client is None and subscription is None:
-            raise TypeError("Pass only one of 'subscription' or 'client'.")
+    def __init__(self, name, subscription=None, topic=None, client=None):
 
-        if client is not None and subscription is not None:
-            raise TypeError("Pass only one of 'subscription' or 'client'.")
+        if len([param for param in (subscription, topic, client) if param]) != 1:
+            raise TypeError("Pass only one of 'subscription', 'topic', 'client'.")
 
         self.name = name
-        self.subscription = subscription
-        self._client = client or subscription.client
+        self.topic = topic or getattr(subscription, 'topic', None)
+        self._subscription = subscription
+        self._client = client or getattr(
+            subscription, '_client', None) or topic._client
         self._project = self._client.project
 
     @classmethod
-    def from_api_repr(cls, resource, client, subscriptions=None):
+    def from_api_repr(cls, resource, client, topics=None):
         """Factory:  construct a subscription given its API representation
 
         :type resource: dict
@@ -48,11 +53,24 @@ class Snapshot(object):
         :rtype: :class:`google.cloud.pubsub.subscription.Subscription`
         :returns: Subscription parsed from ``resource``.
         """
-        if subscriptions is None:
-            subscriptions = {}
-        subscription_path = resource['subscription']
+        if topics is None:
+            topics = {}
+        topic_path = resource['topic']
         if topic_path == cls._DELETED_TOPIC_PATH:
             topic = None
+        else:
+            topic = topics.get(topic_path)
+            if topic is None:
+                # FIXME: delete this
+                # NOTE: This duplicates behavior from Topic.from_api_repr to
+                #       avoid an import cycle.
+                # topic_name = topic_name_from_path(topic_path, client.project)
+                # topic = topics[topic_path] = client.topic(topic_name)
+                topic = Topic.from_api_repr({'name': topic_path}, client)
+        _, _, _, name = resource['name'].split('/')
+        if topic is None:
+            return cls(name, client=client)
+        return cls(name, topic=topic)
 
     @property
     def project(self):
@@ -96,9 +114,13 @@ class Snapshot(object):
         :param client: the client to use.  If not passed, falls back to the
                        ``client`` stored on the current subscription's topic.
         """
+        if not self._subscription:
+            raise RuntimeError(
+                'Cannot create a snapshot not bound to a subscription')
+            
         client = self._require_client(client)
         api = client.subscriber_api
-        api.snapshot_create(self.full_name, self.subscription.full_name)
+        api.snapshot_create(self.full_name, self._subscription.full_name)
 
     # Note: no get so no exists() method
 
