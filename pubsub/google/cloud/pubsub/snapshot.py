@@ -14,7 +14,7 @@
 
 """Define API Snapshots."""
 
-from google.cloud.pubsub.topic import Topic
+from google.cloud.pubsub._helpers import topic_name_from_path
 
 class Snapshot(object):
     # FIXME: do we want this here?
@@ -64,9 +64,9 @@ class Snapshot(object):
                 # FIXME: delete this
                 # NOTE: This duplicates behavior from Topic.from_api_repr to
                 #       avoid an import cycle.
-                # topic_name = topic_name_from_path(topic_path, client.project)
-                # topic = topics[topic_path] = client.topic(topic_name)
-                topic = Topic.from_api_repr({'name': topic_path}, client)
+                topic_name = topic_name_from_path(topic_path, client.project)
+                topic = topics[topic_path] = client.topic(topic_name)
+                # topic = Topic.from_api_repr({'name': topic_path}, client)
         _, _, _, name = resource['name'].split('/')
         if topic is None:
             return cls(name, client=client)
@@ -80,7 +80,7 @@ class Snapshot(object):
     @property
     def full_name(self):
         """Fully-qualified name used in subscription APIs"""
-        return 'projects/%s/subscriptions/%s' % (self.project, self.name)
+        return 'projects/%s/snapshots/%s' % (self.project, self.name)
 
     @property
     def path(self):

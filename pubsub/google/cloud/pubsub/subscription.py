@@ -15,10 +15,10 @@
 """Define API Subscriptions."""
 
 from google.cloud.exceptions import NotFound
+from google.cloud.pubsub.snapshot import Snapshot
 from google.cloud.pubsub._helpers import topic_name_from_path
 from google.cloud.pubsub.iam import Policy
 from google.cloud.pubsub.message import Message
-
 
 class Subscription(object):
     """Subscriptions receive messages published to their topics.
@@ -380,7 +380,7 @@ class Subscription(object):
             self.full_name, ack_ids, ack_deadline)
 
     # Note: snippets?
-    def snapshot(self, name):
+    def snapshot(self, name, client=None):
         """Creates a snapshot of this subscription.
 
         :type name: str
@@ -389,10 +389,10 @@ class Subscription(object):
         :rtype: :class:`Snapshot`
         :returns: The snapshot created with the passed in arguments.
         """
-        return Snapshot(name, subscrption=self)
+        return Snapshot(name, subscription=self)
 
     # Note: snippets?
-    def seek_snapshot(self, snapshot):
+    def seek_snapshot(self, snapshot, client=None):
         """API call:  seek a subscription to a given snapshot
 
         See:
@@ -405,7 +405,7 @@ class Subscription(object):
         api = client.subscriber_api
         api.subscription_seek(self.full_name, snapshot=snapshot.full_name)
 
-    def seek_timestamp(self):
+    def seek_timestamp(self, client=None):
         """API call:  seek a subscription to a given point in time
 
         See:
@@ -424,7 +424,6 @@ class Subscription(object):
 
         See:
         https://cloud.google.com/pubsub/docs/reference/rest/v1/projects.subscriptions/getIamPolicy
-
         Example:
 
         .. literalinclude:: pubsub_snippets.py

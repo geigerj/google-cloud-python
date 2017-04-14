@@ -771,9 +771,6 @@ def _item_to_snapshot_for_client(iterator, snapshot_pb, topics):
     :rtype: :class:`~google.cloud.pubsub.subscription.Subscription`
     :returns: The next subscription in the page.
     """
-    print 'converting'
-    print snapshot_pb
     resource = MessageToDict(snapshot_pb)
-    print resource
     return Snapshot.from_api_repr(
         resource, iterator.client, topics=topics)
