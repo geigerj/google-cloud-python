@@ -15,6 +15,7 @@
 """Define API Subscriptions."""
 
 from google.cloud.exceptions import NotFound
+from google.cloud._helpers import _datetime_to_rfc3339
 from google.cloud.pubsub.snapshot import Snapshot
 from google.cloud.pubsub._helpers import topic_name_from_path
 from google.cloud.pubsub.iam import Policy
@@ -405,7 +406,7 @@ class Subscription(object):
         api = client.subscriber_api
         api.subscription_seek(self.full_name, snapshot=snapshot.full_name)
 
-    def seek_timestamp(self, client=None):
+    def seek_timestamp(self, timestamp, client=None):
         """API call:  seek a subscription to a given point in time
 
         See:
@@ -424,6 +425,7 @@ class Subscription(object):
 
         See:
         https://cloud.google.com/pubsub/docs/reference/rest/v1/projects.subscriptions/getIamPolicy
+
         Example:
 
         .. literalinclude:: pubsub_snippets.py

@@ -1,4 +1,4 @@
-# Copyright 2015 Google Inc.
+# Copyright 2017 Google Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ class Snapshot(object):
 
     def __init__(self, name, subscription=None, topic=None, client=None):
 
+        # FIMXE: why not ValueError
         if len([param for param in (subscription, topic, client) if param]) != 1:
             raise TypeError("Pass only one of 'subscription', 'topic', 'client'.")
 
@@ -61,12 +62,10 @@ class Snapshot(object):
         else:
             topic = topics.get(topic_path)
             if topic is None:
-                # FIXME: delete this
                 # NOTE: This duplicates behavior from Topic.from_api_repr to
                 #       avoid an import cycle.
                 topic_name = topic_name_from_path(topic_path, client.project)
                 topic = topics[topic_path] = client.topic(topic_name)
-                # topic = Topic.from_api_repr({'name': topic_path}, client)
         _, _, _, name = resource['name'].split('/')
         if topic is None:
             return cls(name, client=client)
