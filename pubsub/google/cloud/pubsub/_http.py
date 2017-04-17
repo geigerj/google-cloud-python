@@ -468,32 +468,6 @@ class _SubscriberAPI(object):
         }
         self.api_request(method='POST', path=path, data=data)
 
-    def subscription_modify_ack_deadline(self, subscription_path, ack_ids,
-                                         ack_deadline):
-        """API call:  update ack deadline for retrieved messages
-
-        See:
-        https://cloud.google.com/pubsub/docs/reference/rest/v1/projects.subscriptions/modifyAckDeadline
-
-        :type subscription_path: str
-        :param subscription_path:
-            the fully-qualified path of the new subscription, in format
-            ``projects/<PROJECT>/subscriptions/<SUB_NAME>``.
-
-        :type ack_ids: list of string
-        :param ack_ids: ack IDs of messages being acknowledged
-
-        :type ack_deadline: int
-        :param ack_deadline: the deadline (in seconds) by which messages pulled
-                            from the back-end must be acknowledged.
-        """
-        path = '/%s:modifyAckDeadline' % (subscription_path,)
-        data = {
-            'ackIds': ack_ids,
-            'ackDeadlineSeconds': ack_deadline,
-        }
-        self.api_request(method='POST', path=path, data=data)
-
     def subscription_seek(self, subscription_path, time=None, snapshot=None):
         """API call:  seek a subscription
 

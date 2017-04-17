@@ -146,6 +146,20 @@ class TestSnapshot(unittest.TestCase):
         self.assertEqual(api._snapshot_created, (self.SNAPSHOT_PATH, self.SUB_PATH, ))
 
 
+    def test_create_w_bound_subscription_w_alternate_client(self):
+        client = _Client(project=self.PROJECT)
+        client2 =  _Client(project=self.PROJECT)
+        api = client.subscriber_api = _FauxSubscriberAPI()
+        expected_result = api._snapshot_create_response = object()
+        subscription = _Subscription(name=self.SUB_NAME, client=client)
+        snapshot = self._make_one(self.SNAPSHOT_NAME, subscription=subscription)
+
+        snapshot.create(client=client2)
+
+        self.assertEqual(api._snapshot_created, (self.SNAPSHOT_PATH, self.SUB_PATH, ))
+
+
+
     def test_delete_w_bound_client(self):
         client = _Client(project=self.PROJECT)
         api = client.subscriber_api = _FauxSubscriberAPI()

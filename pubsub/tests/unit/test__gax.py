@@ -1089,6 +1089,22 @@ class Test_SubscriberAPI(_Base, unittest.TestCase):
         self.assertEqual(subscription, self.SUB_PATH)
         self.assertIsNone(options)
 
+    def test_snapshot_create_subscrption_miss(self):
+        from google.cloud.exceptions import NotFound
+
+        gax_api = _GAXSubscriberAPI(_snapshot_create_subscription_miss=True)
+        client = _Client(self.PROJECT)
+        api = self._make_one(gax_api, client)
+
+        with self.assertRaises(NotFound):
+            api.snapshot_create(self.SNAPSHOT_PATH, self.SUB_PATH)
+
+        name, subscription, options = (
+            gax_api._create_snapshot_called_with)
+        self.assertEqual(name, self.SNAPSHOT_PATH)
+        self.assertEqual(subscription, self.SUB_PATH)
+        self.assertIsNone(options)
+
     def test_snapshot_create_error(self):
         from google.gax.errors import GaxError
 
@@ -1374,6 +1390,7 @@ class _GAXSubscriberAPI(_GAXBaseAPI):
     _acknowledge_ok = False
     _modify_ack_deadline_ok = False
     _deadline_exceeded_gax_error = False
+    _snapshot_create_subscription_miss=False
 
     def list_subscriptions(self, project, page_size, options=None):
         self._list_subscriptions_called_with = (project, page_size, options)
@@ -1468,6 +1485,9 @@ class _GAXSubscriberAPI(_GAXBaseAPI):
             raise GaxError('error')
         if self._create_snapshot_conflict:
             raise GaxError('conflict', self._make_grpc_failed_precondition())
+        if self._snapshot_create_subscription_miss
+            raise GaxError('miss', self._make_grpc_not_found())
+
         return self._create_snapshot_response
 
     def delete_snapshot(self, snapshot, options=None):
